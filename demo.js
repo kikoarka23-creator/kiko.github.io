@@ -1,7 +1,7 @@
 let client;
 let clientID = "clientID-" + Math.floor(Math.random() * 1000);
 const broker = "broker.emqx.io";
-const port = 8083; // WebSocket port
+const port = 8084; // WSS port
 
 // Start MQTT connection
 function startConnect() {
@@ -10,11 +10,12 @@ function startConnect() {
     client.onMessageArrived = onMessageArrived;
 
     const options = {
-        useSSL: false,
+        useSSL: true, // harus true untuk GitHub Pages HTTPS
         timeout: 3,
         onSuccess: onConnect,
         onFailure: function(e){ console.log("Connect failed: ", e); }
     };
+
     client.connect(options);
 }
 
@@ -53,11 +54,16 @@ function onMessageArrived(message) {
 // Connection lost
 function onConnectionLost(responseObject) {
     console.log("Connection lost: " + responseObject.errorMessage);
-    startConnect(); // reconnect
+    // reconnect after 3 seconds
+    setTimeout(startConnect, 3000);
 }
 
 // Send relay command
 function switchRelay(relayNumber, state) {
+    if (!client || !client.isConnected()) {
+        console.log("Client not connected yet!");
+        return;
+    }
     const topic = "relay/" + relayNumber;
     const message = new Paho.MQTT.Message(state);
     message.destinationName = topic;
