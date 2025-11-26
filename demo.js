@@ -5,31 +5,38 @@ const port = 8084; // WSS port
 
 // Start MQTT connection
 function startConnect() {
+    if (client && client.isConnected()) {
+        console.log("Already connected");
+        return;
+    }
+
     client = new Paho.MQTT.Client(broker, Number(port), clientID);
     client.onConnectionLost = onConnectionLost;
     client.onMessageArrived = onMessageArrived;
 
     const options = {
-        useSSL: true, // harus true untuk GitHub Pages HTTPS
-        timeout: 3,
+        useSSL: true, // wajib untuk halaman HTTPS
+        timeout: 5,
+        reconnect: true, // otomatis reconnect jika disconnect
         onSuccess: onConnect,
-        onFailure: function(e){ console.log("Connect failed: ", e); }
+        onFailure: function(e){ 
+            console.log("Connect failed: ", e); 
+            setTimeout(startConnect, 3000); // coba reconnect jika gagal
+        }
     };
 
     client.connect(options);
 }
 
-// When connected
+// Called when connected
 function onConnect() {
     console.log("Connected to MQTT broker!");
-    // Subscribe all sensor topics
-    client.subscribe("sensor/temperature");
-    client.subscribe("sensor/humidity");
-    client.subscribe("sensor/infrared");
-    client.subscribe("sensor/current_voltage");
+    // Subscribe semua topik sensor
+    const topics = ["sensor/temperature", "sensor/humidity", "sensor/infrared", "sensor/current_voltage"];
+    topics.forEach(t => client.subscribe(t));
 }
 
-// Message received
+// Called when a message arrives
 function onMessageArrived(message) {
     const topic = message.destinationName;
     const payload = message.payloadString;
@@ -51,19 +58,21 @@ function onMessageArrived(message) {
     console.log("Received", topic, payload);
 }
 
-// Connection lost
+// Called when connection is lost
 function onConnectionLost(responseObject) {
-    console.log("Connection lost: " + responseObject.errorMessage);
-    // reconnect after 3 seconds
-    setTimeout(startConnect, 3000);
+    if (responseObject.errorCode !== 0) {
+        console.log("Connection lost: " + responseObject.errorMessage);
+        setTimeout(startConnect, 3000); // reconnect after 3 seconds
+    }
 }
 
-// Send relay command
+// Send relay command safely
 function switchRelay(relayNumber, state) {
     if (!client || !client.isConnected()) {
-        console.log("Client not connected yet!");
+        console.log("Client not connected yet! Cannot send command.");
         return;
     }
+
     const topic = "relay/" + relayNumber;
     const message = new Paho.MQTT.Message(state);
     message.destinationName = topic;
@@ -72,4 +81,4 @@ function switchRelay(relayNumber, state) {
 }
 
 // Start connection when page loads
-window.onload = startConnect;
+window.addEventListener('load', startConnect);
