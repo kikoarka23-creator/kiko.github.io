@@ -1,7 +1,7 @@
 let client;
 let clientID = "clientID-" + Math.floor(Math.random() * 1000);
 const broker = "broker.hivemq.com"; // broker publik WSS
-const port = 443;                    // port standar HTTPS/WSS
+const port = 443;                    // port standar WSS/HTTPS
 
 // Start MQTT connection
 function startConnect() {
@@ -15,12 +15,12 @@ function startConnect() {
     client.onMessageArrived = onMessageArrived;
 
     const options = {
-        useSSL: true,
+        useSSL: true,        // wajib untuk halaman HTTPS
         timeout: 5,
         onSuccess: onConnect,
         onFailure: function(e) {
             console.log("Connect failed:", e);
-            setTimeout(startConnect, 3000); // coba reconnect jika gagal
+            setTimeout(startConnect, 3000); // coba reconnect manual
         }
     };
 
@@ -30,7 +30,13 @@ function startConnect() {
 // Called when connected
 function onConnect() {
     console.log("WSS connected!");
-    const topics = ["sensor/temperature", "sensor/humidity", "sensor/infrared", "sensor/current_voltage"];
+    // Subscribe semua topik sensor
+    const topics = [
+        "sensor/temperature",
+        "sensor/humidity",
+        "sensor/infrared",
+        "sensor/current_voltage"
+    ];
     topics.forEach(t => client.subscribe(t));
 }
 
@@ -60,7 +66,7 @@ function onMessageArrived(message) {
 function onConnectionLost(responseObject) {
     if (responseObject.errorCode !== 0) {
         console.log("Connection lost:", responseObject.errorMessage);
-        setTimeout(startConnect, 3000); // reconnect after 3 seconds
+        setTimeout(startConnect, 3000); // reconnect manual
     }
 }
 
