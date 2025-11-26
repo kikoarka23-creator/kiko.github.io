@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ESP8266 MQTT Control</title>
+  <!-- Panggil file JS dari folder paho -->
+  <script src="paho/mqttws31.min.js"></script>
+  <script src="paho/demo.js"></script>
+  <style>
+    button { width: 80px; height: 40px; margin: 5px; }
+    .sensor { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Relay Control</h2>
+  <div>
+    <button onclick="switchRelay(1,'on')">R1 ON</button>
+    <button onclick="switchRelay(1,'off')">R1 OFF</button>
+    <button onclick="switchRelay(2,'on')">R2 ON</button>
+    <button onclick="switchRelay(2,'off')">R2 OFF</button>
+    <button onclick="switchRelay(3,'on')">R3 ON</button>
+    <button onclick="switchRelay(3,'off')">R3 OFF</button>
+    <button onclick="switchRelay(4,'on')">R4 ON</button>
+    <button onclick="switchRelay(4,'off')">R4 OFF</button>
+  </div>
+
+  <h2>Sensor Data</h2>
+  <div class="sensor">
+    Temp: <span id="temperature">-</span> °C<br>
+    Humidity: <span id="humidity">-</span> %<br>
+    IR: <span id="infrared">-</span><br>
+    Current: <span id="current">-</span> V
+  </div>
+</body>
+</html>
