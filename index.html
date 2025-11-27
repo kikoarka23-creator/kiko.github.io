@@ -3,23 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <title>ESP8266 MQTT Control</title>
-  <!-- Panggil file JS dari root -->
-  <script src="mqttws31.min.js"></script>
+
+  <!-- Paho MQTT JS secure (WSS) -->
+  <script src="https://unpkg.com/paho-mqtt/mqttws31.min.js"></script>
+
+  <!-- File demo.js kamu -->
   <script src="demo.js"></script>
+
   <style>
     button { width: 80px; height: 40px; margin: 5px; }
     .sensor { margin-top: 10px; }
   </style>
 </head>
+
 <body>
   <h2>Relay Control</h2>
   <div>
     <button onclick="switchRelay(1,'on')">R1 ON</button>
     <button onclick="switchRelay(1,'off')">R1 OFF</button>
+
     <button onclick="switchRelay(2,'on')">R2 ON</button>
     <button onclick="switchRelay(2,'off')">R2 OFF</button>
+
     <button onclick="switchRelay(3,'on')">R3 ON</button>
     <button onclick="switchRelay(3,'off')">R3 OFF</button>
+
     <button onclick="switchRelay(4,'on')">R4 ON</button>
     <button onclick="switchRelay(4,'off')">R4 OFF</button>
   </div>
@@ -31,5 +39,6 @@
     IR: <span id="infrared">-</span><br>
     Current: <span id="current">-</span> V
   </div>
+
 </body>
 </html>
