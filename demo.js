@@ -1,88 +1,79 @@
 let client;
-let clientID = "clientID-" + Math.floor(Math.random() * 1000);
-const broker = "broker.hivemq.com"; // broker publik WSS
-const port = 443;                    // port standar WSS/HTTPS
+let clientID = "clientID-" + Math.floor(Math.random() * 10000);
 
-// Start MQTT connection
+// MQTT Broker
+const broker = "broker.emqx.io";
+const port = 8084; // WSS (Secure WebSocket)
+
+// Start connection
 function startConnect() {
-    if (client && client.isConnected()) {
-        console.log("Already connected");
-        return;
-    }
+    console.log("Connecting to MQTT...");
 
-    client = new Paho.MQTT.Client(broker, Number(port), clientID);
+    // Use WSS (Secure)
+    client = new Paho.MQTT.Client("wss://" + broker + ":" + port + "/mqtt", clientID);
+
     client.onConnectionLost = onConnectionLost;
     client.onMessageArrived = onMessageArrived;
 
     const options = {
-        useSSL: true,        // wajib untuk halaman HTTPS
-        timeout: 5,
+        timeout: 3,
+        useSSL: true,   // 🔥 WAJIB!!! untuk GitHub Pages
         onSuccess: onConnect,
-        onFailure: function(e) {
+        onFailure: function (e) {
             console.log("Connect failed:", e);
-            setTimeout(startConnect, 3000); // coba reconnect manual
+            setTimeout(startConnect, 3000); // retry
         }
     };
 
     client.connect(options);
 }
 
-// Called when connected
+// When connected
 function onConnect() {
-    console.log("WSS connected!");
-    // Subscribe semua topik sensor
-    const topics = [
-        "sensor/temperature",
-        "sensor/humidity",
-        "sensor/infrared",
-        "sensor/current_voltage"
-    ];
-    topics.forEach(t => client.subscribe(t));
+    console.log("Connected to MQTT broker!");
+
+    // Subscribe to all ESP topics
+    client.subscribe("sensor/temperature");
+    client.subscribe("sensor/humidity");
+    client.subscribe("sensor/infrared");
+    client.subscribe("sensor/current_voltage");
 }
 
-// Called when a message arrives
+// Message received
 function onMessageArrived(message) {
     const topic = message.destinationName;
     const payload = message.payloadString;
 
-    switch(topic) {
-        case "sensor/temperature":
-            document.getElementById("temperature").innerText = payload;
-            break;
-        case "sensor/humidity":
-            document.getElementById("humidity").innerText = payload;
-            break;
-        case "sensor/infrared":
-            document.getElementById("infrared").innerText = payload;
-            break;
-        case "sensor/current_voltage":
-            document.getElementById("current").innerText = payload;
-            break;
+    if (topic === "sensor/temperature") {
+        document.getElementById("temperature").innerText = payload;
     }
-    console.log("Received", topic, payload);
+    if (topic === "sensor/humidity") {
+        document.getElementById("humidity").innerText = payload;
+    }
+    if (topic === "sensor/infrared") {
+        document.getElementById("infrared").innerText = payload;
+    }
+    if (topic === "sensor/current_voltage") {
+        document.getElementById("current").innerText = payload;
+    }
+
+    console.log("Received:", topic, payload);
 }
 
-// Called when connection is lost
+// If disconnected → reconnect
 function onConnectionLost(responseObject) {
-    if (responseObject.errorCode !== 0) {
-        console.log("Connection lost:", responseObject.errorMessage);
-        setTimeout(startConnect, 3000); // reconnect manual
-    }
+    console.log("Connection lost:", responseObject.errorMessage);
+    setTimeout(startConnect, 2000);
 }
 
-// Send relay command safely
+// Publish relay control
 function switchRelay(relayNumber, state) {
-    if (!client || !client.isConnected()) {
-        console.log("Client not connected yet! Cannot send command.");
-        return;
-    }
-
     const topic = "relay/" + relayNumber;
     const message = new Paho.MQTT.Message(state);
     message.destinationName = topic;
     client.send(message);
-    console.log("Sent", topic, state);
+    console.log("Sent:", topic, state);
 }
 
-// Start connection when page loads
-window.addEventListener('load', startConnect);
+// Start when page loads
+window.onload = startConnect;
